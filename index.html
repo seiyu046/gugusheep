@@ -100,23 +100,29 @@
     });
 
     function drawSheep(sheep) {
-      const jumpHeight = 80;
-      const jumpSpeed = 0.05;
+  const jumpHeight = 80;
+  const jumpSpeed = 0.05;
 
-      sheep.x += sheep.speed * sheep.direction;
-      sheep.jumpProgress += jumpSpeed;
-      sheep.y = groundY - Math.sin(sheep.jumpProgress * Math.PI) * jumpHeight;
+  sheep.x += sheep.speed * sheep.direction;
+  sheep.jumpProgress += jumpSpeed;
+  sheep.y = groundY - Math.sin(sheep.jumpProgress * Math.PI) * jumpHeight;
 
-      const img = sheep.image;
-      const drawX = sheep.x - (sheep.direction === -1 ? img.width : 0); // Flip anchor
-      ctx.drawImage(img, drawX, sheep.y - img.height / 2);
+  const img = sheep.image;
+  const targetWidth = 100;
+  const targetHeight = 100;
 
-      // 畫名稱標籤
-      ctx.font = "14px sans-serif";
-      ctx.fillStyle = "#000";
-      ctx.textAlign = "center";
-      ctx.fillText(sheep.name, sheep.x, sheep.y + 10);
-    }
+  // 如果往左跳，調整 anchor
+  const drawX = sheep.direction === -1 ? sheep.x - targetWidth : sheep.x;
+  const drawY = sheep.y - targetHeight / 2;
+
+  ctx.drawImage(img, drawX, drawY, targetWidth, targetHeight);
+
+  // 畫標籤名稱
+  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#000";
+  ctx.textAlign = "center";
+  ctx.fillText(sheep.name, sheep.x, sheep.y + 60);
+}
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
