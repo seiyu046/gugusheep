@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>數羊遊戲（進階版）</title>
+  <style>
+    body {
+      background: #cceeff;
+      overflow: hidden;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    #uploadArea {
+      margin: 20px;
+    }
+
+    #fence {
+      position: absolute;
+      left: 50%;
+      top: 60%;
+      width: 40px;
+      height: 80px;
+      background: brown;
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #ccf8ff;
+      border: 2px solid #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div id="uploadArea">
+    <input type="file" id="imageUpload" accept="image/png" multiple>
+    <button id="jumpBtn">跳一隻羊</button>
+  </div>
+  <div id="fence"></div>
+  <canvas id="canvas" width="800" height="400"></canvas>
+
+  <audio id="baaSound" src="https://www.soundjay.com/animals/sheep-bleating-01.mp3" preload="auto"></audio>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const groundY = 300;
+    const baaSound = document.getElementById("baaSound");
+
+    let sheepImages = []; // {img, name}
+    let sheepList = [];
+
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      sheepImages = []; // 清空
+      Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            sheepImages.push({ img, name: file.name });
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById('jumpBtn').addEventListener('click', function() {
+      if (sheepImages.length === 0) {
+        alert("請先上傳透明 PNG 羊圖（可多張）");
+        return;
+      }
+
+      const sheepData = sheepImages[Math.floor(Math.random() * sheepImages.length)];
+      const direction = Math.random() > 0.5 ? 1 : -1;
+      const speed = 2 + Math.random() * 2;
+
+      const startX = direction === 1 ? -100 : canvas.width + 100;
+
+      sheepList.push({
+        x: startX,
+        y: groundY,
+        direction,
+        speed,
+        jumpProgress: 0,
+        image: sheepData.img,
+        name: sheepData.name
+      });
+
+      baaSound.currentTime = 0;
+      baaSound.play();
+    });
+
+    function drawSheep(sheep) {
+      const jumpHeight = 80;
+      const jumpSpeed = 0.05;
+
+      sheep.x += sheep.speed * sheep.direction;
+      sheep.jumpProgress += jumpSpeed;
+      sheep.y = groundY - Math.sin(sheep.jumpProgress * Math.PI) * jumpHeight;
+
+      const img = sheep.image;
+      const drawX = sheep.x - (sheep.direction === -1 ? img.width : 0); // Flip anchor
+      ctx.drawImage(img, drawX, sheep.y - img.height / 2);
+
+      // 畫名稱標籤
+      ctx.font = "14px sans-serif";
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+      ctx.fillText(sheep.name, sheep.x, sheep.y + 10);
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 地面
+      ctx.fillStyle = '#88cc88';
+      ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+      // 畫羊
+      sheepList.forEach(drawSheep);
+
+      // 移除畫面外羊
+      sheepList = sheepList.filter(s =>
+        s.x > -200 && s.x < canvas.width + 200
+      );
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
